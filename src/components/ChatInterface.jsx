@@ -1,5 +1,21 @@
 import { useRef, useState, useEffect } from 'preact/hooks'
-import { ask } from '../chromeai.mjs'
+import { queryAssistant } from '../chromeai.mjs'
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt({
+  breaks: true,
+  linkify: true,
+  typographer: true,
+})
+
+const Message = ({ content, role }) => (
+  <div className={`chrome-ai-message ${role}`}>
+    <div
+      className="chrome-ai-message-content markdown-body"
+      dangerouslySetInnerHTML={{ __html: md.render(content) }}
+    />
+  </div>
+)
 
 const SettingsPanel = () => {
   const [apiKey, setApiKey] = useState('')
@@ -63,15 +79,32 @@ const SettingsPanel = () => {
 
 export const ChatInterface = ({ hasSelection }) => {
   const inputRef = useRef(null)
+  const messagesEndRef = useRef(null)
   const [mode, setMode] = useState(hasSelection ? 'selection' : null)
   const [showSettings, setShowSettings] = useState(false)
+  const [messages, setMessages] = useState([])
 
-  // Remove the focus effect since we handle it in content.jsx
   useEffect(() => {
     if (hasSelection) {
       setMode('selection')
     }
   }, [hasSelection])
+
+  useEffect(() => {
+    // Load messages on mount
+    chrome.storage.local.get(['messages'], (result) => {
+      if (result.messages) {
+        setMessages(result.messages)
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    // Save messages when they change
+    chrome.storage.local.set({ messages })
+    // Scroll to bottom on new message
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const toggleMode = (newMode) => {
     setMode(mode === newMode ? null : newMode)
@@ -90,7 +123,17 @@ export const ChatInterface = ({ hasSelection }) => {
       context.selection = window.getSelection().toString().trim()
     }
 
-    await ask(query, context)
+    // Add user message
+    const userMessage = { content: query, role: 'user' }
+    setMessages((prev) => [...prev, userMessage])
+
+    // Get AI response
+    const response = await queryAssistant(query, context)
+
+    // Add assistant message
+    const assistantMessage = { content: response, role: 'assistant' }
+    setMessages((prev) => [...prev, assistantMessage])
+
     inputRef.current.value = ''
   }
 
@@ -112,7 +155,10 @@ export const ChatInterface = ({ hasSelection }) => {
         ) : (
           <>
             <div className="chrome-ai-chat-container">
-              {/* Chat messages will go here */}
+              {messages.map((msg, idx) => (
+                <Message key={idx} {...msg} />
+              ))}
+              <div ref={messagesEndRef} />
             </div>
             <div className="chrome-ai-input-container">
               <div className="chrome-ai-button-bar">

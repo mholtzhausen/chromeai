@@ -1,4 +1,6 @@
-export async function ask(query, context, system = 'You are a helpful assistant') {
+import { ask } from "./lib/openai.mjs"
+
+export async function queryAssistant(query, context, system = 'You are a helpful assistant') {
   // Verify the shape of the context
   if (!context || typeof context !== 'object') {
     throw new Error('Context must be an object')
@@ -13,5 +15,14 @@ export async function ask(query, context, system = 'You are a helpful assistant'
   }
 
   console.log({ query, context, system })
+  let _system = [system]
+  if (context.web) {
+    _system.push(`Contextual Information:\n---\n${context.web}\n---`)
+  }
+  if (context.selection) {
+    _system.push(`Contextual Information:\n---\n${context.selection}\n---`)
+  }
+  let answer = await ask(query, { system: _system.join('\n') })
+  return answer
   // TODO: Implement actual API call logic here
 }

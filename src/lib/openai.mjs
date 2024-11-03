@@ -1,12 +1,29 @@
 import OpenAI from "openai"
-import 'dotenv/config'
 import { zodResponseFormat } from 'openai/helpers/zod'
 import zodToJsonSchema from "zod-to-json-schema"
-import z from "zod"
-import { debug } from '../utils/debug.mjs'
-export const openai = new OpenAI(process.env.OPENAI_API_KEY)
+// import { debug } from '../utils/debug.mjs'
+const debug = console.log
+
+let openaiInstance = null
+
+export const initOpenAI = async () => {
+  if (openaiInstance) return openaiInstance
+
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['openaiApiKey'], (result) => {
+      const apiKey = result.openaiApiKey || process.env.OPENAI_API_KEY
+      openaiInstance = new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
+      resolve(openaiInstance)
+    })
+  })
+}
+
+export const getOpenAI = async () => {
+  return await initOpenAI()
+}
 
 export const ask = async (prompt, config) => {
+  const openai = await getOpenAI()
   config = {
     model: 'gpt-4o-mini',
     system: 'You are a helpful assistant',
@@ -72,6 +89,7 @@ export const createStructuredAsk = (
   }
   let { model, system, messages } = config
   let structuredAsk = async function (prompt) {
+    const openai = await getOpenAI()
     let options = {
       model: model,
       messages: [
@@ -118,6 +136,7 @@ export const structuredAsk = async (
     }
     let { model, system, messages } = config
     let structuredAsk = async function (prompt) {
+      const openai = await getOpenAI()
       let options = {
         model: model,
         messages: [
@@ -147,6 +166,7 @@ export const structuredAsk = async (
 }
 
 export const toolAsk = async (prompt, tools, config) => {
+  const openai = await getOpenAI()
   tools = Array.isArray(tools) ? tools : [tools]
   config = {
     model: 'gpt-4o-mini',
