@@ -40,6 +40,8 @@ iframe.style.cssText = `
   transition: transform 0.3s ease;
   z-index: 2147483647;
   box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
 `
 
 // Initialize iframe content
@@ -73,6 +75,21 @@ const initializeIframe = async () => {
     <ChatInterface hasSelection={Boolean(selectedText)} key={Date.now()} />,
     iframe.contentDocument.getElementById('chrome-ai-root')
   )
+  focusInput()
+}
+
+const focusInput = () => {
+  const tryFocus = (attempts = 0) => {
+    const input = iframe.contentDocument.querySelector('.chrome-ai-input')
+    if (input) {
+      setTimeout(() => input.focus(), 50)
+      return
+    }
+    if (attempts < 10) {
+      setTimeout(() => tryFocus(attempts + 1), 50)
+    }
+  }
+  tryFocus()
 }
 
 const togglePanel = () => {
@@ -84,9 +101,10 @@ const togglePanel = () => {
       navigator.clipboard.writeText(selectedText)
     }
     render(
-      <ChatInterface hasSelection={Boolean(selectedText)} />,
+      <ChatInterface hasSelection={Boolean(selectedText)} key={Date.now()} />,
       iframe.contentDocument.getElementById('chrome-ai-root')
     )
+    focusInput()
   }
 
   iframe.style.transform = isOpen ? 'translateX(400px)' : 'translateX(0px)'

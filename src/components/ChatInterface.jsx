@@ -5,12 +5,7 @@ export const ChatInterface = ({ hasSelection }) => {
   const inputRef = useRef(null)
   const [mode, setMode] = useState(hasSelection ? 'selection' : null)
 
-  // Add effect to focus input on mount
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-
-  // Add effect to update mode when hasSelection changes
+  // Remove the focus effect since we handle it in content.jsx
   useEffect(() => {
     if (hasSelection) {
       setMode('selection')
