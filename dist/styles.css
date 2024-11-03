@@ -144,3 +144,18 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
+.chrome-ai-setting-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chrome-ai-save-status {
+  font-size: 14px;
+  color: #4285f4;
+}
+
+.chrome-ai-save-status.error {
+  color: #dc3545;
+}

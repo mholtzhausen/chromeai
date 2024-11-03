@@ -50,7 +50,8 @@ const initializeIframe = async () => {
     r.text()
   )
 
-  iframe.contentDocument.write(`
+  const doc = iframe.contentDocument
+  const html = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -68,8 +69,11 @@ const initializeIframe = async () => {
         <div id="chrome-ai-root"></div>
       </body>
     </html>
-  `)
-  iframe.contentDocument.close()
+  `
+
+  // Replace document.write with safer DOM manipulation
+  iframe.contentWindow.document.documentElement.innerHTML = html
+
   const selectedText = window.getSelection().toString().trim()
   render(
     <ChatInterface hasSelection={Boolean(selectedText)} key={Date.now()} />,

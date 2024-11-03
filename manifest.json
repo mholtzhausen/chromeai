@@ -7,7 +7,8 @@
     "commands",
     "tabs",
     "activeTab",
-    "clipboardWrite"
+    "clipboardWrite",
+    "storage"
   ],
   "web_accessible_resources": [
     {

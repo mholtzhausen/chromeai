@@ -3,6 +3,7 @@ import { ask } from '../chromeai.mjs'
 
 const SettingsPanel = () => {
   const [apiKey, setApiKey] = useState('')
+  const [saveStatus, setSaveStatus] = useState('')
 
   useEffect(() => {
     // Load saved API key on mount
@@ -14,7 +15,16 @@ const SettingsPanel = () => {
   }, [])
 
   const handleSaveApiKey = () => {
-    chrome.storage.local.set({ openaiApiKey: apiKey })
+    setSaveStatus('Saving...')
+    chrome.storage.local.set({ openaiApiKey: apiKey }, () => {
+      if (chrome.runtime.lastError) {
+        setSaveStatus('Error saving key!')
+        console.error(chrome.runtime.lastError)
+      } else {
+        setSaveStatus('Saved!')
+        setTimeout(() => setSaveStatus(''), 2000)
+      }
+    })
   }
 
   return (
@@ -27,8 +37,25 @@ const SettingsPanel = () => {
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           placeholder="sk-..."
+          autocomplete="off"
         />
-        <button onClick={handleSaveApiKey}>Save</button>
+        <div className="chrome-ai-setting-actions">
+          <button
+            onClick={handleSaveApiKey}
+            disabled={saveStatus === 'Saving...'}
+          >
+            Save
+          </button>
+          {saveStatus && (
+            <span
+              className={`chrome-ai-save-status ${
+                saveStatus === 'Error saving key!' ? 'error' : ''
+              }`}
+            >
+              {saveStatus}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
