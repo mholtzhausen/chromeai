@@ -35,9 +35,36 @@
 }
 
 .chrome-ai-chat-container {
-  height: calc(100vh - 140px);
+  height: calc(100vh - 140px); /* Revert back to original height */
   overflow-y: auto;
   padding: 20px;
+}
+
+.chrome-ai-button-bar {
+  padding: 10px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.chrome-ai-toggle-button {
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chrome-ai-toggle-button.active {
+  background-color: #e8f0fe;
+  color: #4285f4;
+}
+
+.chrome-ai-toggle-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .chrome-ai-input-container {
@@ -45,7 +72,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: 20px;
+  padding: 0 20px 20px;
   background: white;
   border-top: 1px solid #eee;
   box-sizing: border-box;

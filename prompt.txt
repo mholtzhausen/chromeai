@@ -10,3 +10,6 @@ the tab does not move along with the panel when it opens.
 it also does not toggle open when Alt-A is pressed
 
 When the panel opens, the input box should be automatically focussed for input
+
+
+Above the input box, add a button bar that right-aligns. there should be two icons that can either be both off, or one on and the other off, but not two on at the same time. They should bear icons that represent 1.the web, 2. the selection. (The selection icon should only be enabled if there is a selection made on the page before activating the pane)

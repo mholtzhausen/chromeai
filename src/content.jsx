@@ -68,14 +68,24 @@ const initializeIframe = async () => {
     </html>
   `)
   iframe.contentDocument.close()
+  const selectedText = window.getSelection().toString().trim()
   render(
-    <ChatInterface />,
+    <ChatInterface hasSelection={Boolean(selectedText)} />,
     iframe.contentDocument.getElementById('chrome-ai-root')
   )
 }
 
 const togglePanel = () => {
   const isOpen = iframe.style.transform === 'translateX(0px)'
+  const selectedText = window.getSelection().toString().trim()
+
+  if (!isOpen) {
+    // Re-render with current selection state
+    render(
+      <ChatInterface hasSelection={Boolean(selectedText)} />,
+      iframe.contentDocument.getElementById('chrome-ai-root')
+    )
+  }
 
   if (!isOpen) {
     // Handle text selection when opening
