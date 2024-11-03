@@ -1,0 +1,17 @@
+{
+  "name": "chromeai",
+  "version": "1.0.0",
+  "main": "content.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@preact/preset-vite": "^2.9.1",
+    "preact": "^10.24.3",
+    "vite": "^5.4.10"
+  }
+}

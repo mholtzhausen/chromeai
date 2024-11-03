@@ -1,0 +1,12 @@
+Project Outline: 
+
+Create a chrome extension that displays a small tab on the right side of the screen. When you click the tab, or press Alt-A, a panel should expand. The panel should contain a heading, 'ChromeAi', and a chat interface, with the input element at the bottom of the screen. Use preact. 
+
+When the panel slides open, the tab should slide open with it and stay attached to the left hand side of the panel.
+
+the tab should be visible when the panel is closed. but slide out along with the panel as it opens.
+
+the tab does not move along with the panel when it opens. 
+it also does not toggle open when Alt-A is pressed
+
+When the panel opens, the input box should be automatically focussed for input
