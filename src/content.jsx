@@ -33,8 +33,8 @@ iframe.style.cssText = `
   border: none;
   position: fixed;
   right: 0;
-  top: 0;
-  height: 100vh;
+  top: 15px;
+  height: calc(100vh - 30px);
   width: 400px;
   transform: translateX(400px);
   transition: transform 0.3s ease;
@@ -70,7 +70,7 @@ const initializeIframe = async () => {
   iframe.contentDocument.close()
   const selectedText = window.getSelection().toString().trim()
   render(
-    <ChatInterface hasSelection={Boolean(selectedText)} />,
+    <ChatInterface hasSelection={Boolean(selectedText)} key={Date.now()} />,
     iframe.contentDocument.getElementById('chrome-ai-root')
   )
 }
@@ -80,34 +80,17 @@ const togglePanel = () => {
   const selectedText = window.getSelection().toString().trim()
 
   if (!isOpen) {
-    // Re-render with current selection state
+    if (selectedText) {
+      navigator.clipboard.writeText(selectedText)
+    }
     render(
       <ChatInterface hasSelection={Boolean(selectedText)} />,
       iframe.contentDocument.getElementById('chrome-ai-root')
     )
   }
 
-  if (!isOpen) {
-    // Handle text selection when opening
-    const selectedText = window.getSelection().toString().trim()
-    if (selectedText) {
-      navigator.clipboard.writeText(selectedText)
-    }
-  }
-
   iframe.style.transform = isOpen ? 'translateX(400px)' : 'translateX(0px)'
   tab.style.right = isOpen ? '0' : '400px'
-
-  // Focus input when opening
-  if (!isOpen) {
-    // Small delay to ensure iframe content is ready
-    setTimeout(() => {
-      const input = iframe.contentDocument.querySelector('.chrome-ai-input')
-      if (input) {
-        input.focus()
-      }
-    }, 300)
-  }
 }
 
 tab.addEventListener('click', togglePanel)
