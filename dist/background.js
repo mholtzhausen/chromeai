@@ -1,1 +1,1 @@
-chrome.commands.onCommand.addListener(e=>{e==="toggle-panel"&&chrome.tabs.query({active:!0,currentWindow:!0},a=>{chrome.tabs.sendMessage(a[0].id,{command:"toggle-panel"})})});
+let a=new Set;chrome.runtime.onConnect.addListener(e=>{a.add(e),e.onDisconnect.addListener(()=>a.delete(e))});chrome.commands.onCommand.addListener(async e=>{var n;if(e==="toggle-panel"){const t=await chrome.tabs.query({active:!0,currentWindow:!0});(n=t[0])!=null&&n.id&&chrome.tabs.sendMessage(t[0].id,{command:"toggle-panel"}).catch(()=>{})}});
