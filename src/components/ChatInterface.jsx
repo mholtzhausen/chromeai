@@ -137,18 +137,32 @@ export const ChatInterface = ({ hasSelection }) => {
     inputRef.current.value = ''
   }
 
+  const clearMessages = () => {
+    setMessages([])
+    chrome.storage.local.set({ messages: [] })
+  }
+
   return (
     <div className="chrome-ai-container">
       <div className="chrome-ai-panel">
         <div className="chrome-ai-header">
           <span>ChromeAi</span>
-          <button
-            className="chrome-ai-settings-button"
-            onClick={() => setShowSettings(!showSettings)}
-            title={showSettings ? 'Close settings' : 'Open settings'}
-          >
-            {showSettings ? '✕' : '⚙️'}
-          </button>
+          <div className="chrome-ai-header-buttons">
+            <button
+              className="chrome-ai-header-button"
+              onClick={clearMessages}
+              title="Clear messages"
+            >
+              🗑️
+            </button>
+            <button
+              className="chrome-ai-header-button"
+              onClick={() => setShowSettings(!showSettings)}
+              title={showSettings ? 'Close settings' : 'Open settings'}
+            >
+              {showSettings ? '✕' : '⚙️'}
+            </button>
+          </div>
         </div>
         {showSettings ? (
           <SettingsPanel />

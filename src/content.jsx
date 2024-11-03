@@ -35,8 +35,8 @@ iframe.style.cssText = `
   right: 0;
   top: 15px;
   height: calc(100vh - 30px);
-  width: 400px;
-  transform: translateX(400px);
+  width: min(40vw, 800px);
+  transform: translateX(100%);
   transition: transform 0.3s ease;
   z-index: 2147483647;
   box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
@@ -111,8 +111,8 @@ const togglePanel = () => {
     focusInput()
   }
 
-  iframe.style.transform = isOpen ? 'translateX(400px)' : 'translateX(0px)'
-  tab.style.right = isOpen ? '0' : '400px'
+  iframe.style.transform = isOpen ? 'translateX(100%)' : 'translateX(0px)'
+  tab.style.right = isOpen ? '0' : iframe.offsetWidth + 'px'
 }
 
 tab.addEventListener('click', togglePanel)

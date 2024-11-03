@@ -1,62 +1,208 @@
-.chrome-ai-chat-container {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  background: #f8f9fa;
+/* Reset styles for Chrome AI elements */
+.chrome-ai-container,
+.chrome-ai-container * {
+  all: revert;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  line-height: normal;
+  border: none;
+  outline: none;
+  background: none;
+  color: inherit;
 }
 
-.chrome-ai-message {
-  max-width: 85%;
-  padding: 0.75rem 1rem;
-  border-radius: 1rem;
-  margin: 0.25rem 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.chrome-ai-message.user {
-  align-self: flex-end;
-  background-color: #4285f4;
-  color: white;
-  border-bottom-right-radius: 0.25rem;
-}
-
-.chrome-ai-message.assistant {
-  align-self: flex-start;
-  background-color: white;
-  color: #202124;
-  border-bottom-left-radius: 0.25rem;
-}
-
-.chrome-ai-message-content {
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.4;
-  font-size: 0.9375rem;
-}
-
-.chrome-ai-panel {
-  display: flex;
-  flex-direction: column;
+/* Layout */
+.chrome-ai-container {
   height: 100vh;
+  width: 100%;
+  min-width: 400px;
   background: white;
 }
 
+.chrome-ai-panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: white;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
 .chrome-ai-header {
-  padding: 0.75rem 1rem;
+  padding: 12px 16px;
+  background: #4285f4;
+  color: white;
   border-bottom: 1px solid #e0e0e0;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+/* Update header styles */
+.chrome-ai-header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.chrome-ai-header-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  color: inherit;
+}
+
+.chrome-ai-header-button:hover {
+  transform: scale(1.1);
+}
+
+/* Remove old settings button styles */
+.chrome-ai-settings-button {
+  display: none;
+}
+
+/* Chat Container */
+.chrome-ai-chat-container {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 1rem; /* Increased gap between messages */
+  margin-bottom: 0.5rem;
+  background: #f8f9fa;
+}
+
+/* Messages */
+.chrome-ai-message {
+  max-width: 85%;
+  padding: 0.3rem 0.8rem; /* Increased padding */
+  border-radius: 0.5rem; /* Slightly larger radius */
+  margin: 0.25rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Enhanced shadow */
+}
+
+.chrome-ai-message.user {
+  align-self: flex-end;
+  background-color: #4285f4;
+  color: white;
+  border-bottom-right-radius: 0.1rem;
+  margin-left: 2rem; /* Add margin to keep messages from touching the edge */
+}
+
+.chrome-ai-message.assistant {
+  align-self: flex-start;
+  background-color: white;
+  color: #202124;
+  border-bottom-left-radius: 0.1rem;
+  border: 1px solid #e0e0e0; /* Add border to distinguish assistant messages */
+  margin-right: 2rem; /* Add margin to keep messages from touching the edge */
+}
+
+.chrome-ai-message-content {
+  word-break: break-word;
+  line-height: 1.5; /* Increased line height */
+  font-size: 0.9375rem;
+}
+
+/* Button Bar */
+.chrome-ai-button-bar {
+  padding: 10px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.chrome-ai-toggle-button {
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chrome-ai-toggle-button.active {
+  background-color: #e8f0fe;
+  color: #4285f4;
+}
+
+.chrome-ai-toggle-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Input Container */
 .chrome-ai-input-container {
   padding: 1rem;
   border-top: 1px solid #e0e0e0;
   background: white;
+}
+
+.chrome-ai-input {
+  width: calc(100% - 20px);
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin: 0 10px;
+}
+
+/* Settings Panel */
+.chrome-ai-settings {
+  padding: 20px;
+}
+
+.chrome-ai-setting-group {
+  margin-bottom: 16px;
+}
+
+.chrome-ai-setting-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.chrome-ai-setting-group input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.chrome-ai-setting-group button {
+  background: #4285f4;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chrome-ai-setting-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chrome-ai-save-status {
+  font-size: 14px;
+  color: #4285f4;
+}
+
+.chrome-ai-save-status.error {
+  color: #dc3545;
 }
 
 /* Markdown Styles */

@@ -8,7 +8,7 @@ function copyFiles() {
     name: 'copy-files',
     writeBundle() {
       fs.copyFileSync('manifest.json', 'dist/manifest.json')
-      fs.copyFileSync('styles.css', 'dist/styles.css')
+      fs.copyFileSync('public/styles.css', 'dist/styles.css')  // Update this path
     }
   }
 }
