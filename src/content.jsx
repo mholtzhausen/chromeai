@@ -1,6 +1,10 @@
 import { render } from 'preact'
 import { ChatInterface } from './components/ChatInterface'
 
+const iconUrls = {
+  copy: chrome.runtime.getURL('icons/copy.svg'),
+}
+
 // Create tab element
 const tab = document.createElement('div')
 tab.innerHTML = '✨'
@@ -53,24 +57,41 @@ iframe.style.cssText = `
 
 // Initialize iframe content
 const initializeIframe = async () => {
-  const styleText = await fetch(chrome.runtime.getURL('styles.css')).then((r) =>
-    r.text()
-  )
+  let iconStyles = `
+
+    .chrome-ai-icon.copy {mask: url(${chrome.runtime.getURL(
+      'icons/copy.svg'
+    )}) no-repeat;}
+    .chrome-ai-icon.file-plus {mask: url(${chrome.runtime.getURL(
+      'icons/file-plus.svg'
+    )}) no-repeat;}
+    .chrome-ai-icon.file {mask: url(${chrome.runtime.getURL(
+      'icons/file.svg'
+    )}) no-repeat;}
+    .chrome-ai-icon.globe {mask: url(${chrome.runtime.getURL(
+      'icons/globe.svg'
+    )}) no-repeat;}
+    .chrome-ai-icon.scissors {mask: url(${chrome.runtime.getURL(
+      'icons/scissors.svg'
+    )}) no-repeat;}
+    .chrome-ai-icon.settings {mask: url(${chrome.runtime.getURL(
+      'icons/settings.svg'
+    )}) no-repeat;}
+    .chrome-ai-icon.close {mask: url(${chrome.runtime.getURL(
+      'icons/x-circle.svg'
+    )}) no-repeat;}
+    .chrome-ai-icon.trash {mask: url(${chrome.runtime.getURL(
+      'icons/trash-2.svg'
+    )}) no-repeat;}
+  `
 
   const doc = iframe.contentDocument
   const html = `
     <!DOCTYPE html>
     <html>
       <head>
-        <style>
-          body { 
-            margin: 0; 
-            padding: 0;
-            height: 100vh;
-            overflow: hidden;
-          }
-          ${styleText}
-        </style>
+        <link rel="stylesheet" href="${chrome.runtime.getURL('styles.css')}">
+        <style>${iconStyles}</style>
       </head>
       <body>
         <div id="chrome-ai-root"></div>
@@ -116,7 +137,11 @@ const initializeIframe = async () => {
 
   const selectedText = window.getSelection().toString().trim()
   render(
-    <ChatInterface hasSelection={Boolean(selectedText)} key={Date.now()} />,
+    <ChatInterface
+      hasSelection={Boolean(selectedText)}
+      iconUrls={iconUrls}
+      key={Date.now()}
+    />,
     iframe.contentDocument.getElementById('chrome-ai-root')
   )
   focusInput()
@@ -145,7 +170,11 @@ const togglePanel = () => {
       navigator.clipboard.writeText(selectedText)
     }
     render(
-      <ChatInterface hasSelection={Boolean(selectedText)} key={Date.now()} />,
+      <ChatInterface
+        hasSelection={Boolean(selectedText)}
+        iconUrls={iconUrls}
+        key={Date.now()}
+      />,
       iframe.contentDocument.getElementById('chrome-ai-root')
     )
     focusInput()

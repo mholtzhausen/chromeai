@@ -1,7 +1,12 @@
 /* Reset styles for Chrome AI elements */
-.chrome-ai-container,
-.chrome-ai-container * {
-  all: revert;
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.chrome-ai-container {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -66,8 +71,21 @@
   color: inherit;
 }
 
+.chrome-ai-header-button.chrome-ai-icon.hidden {
+  display: none;
+}
+.chrome-ai-header-button.chrome-ai-icon {
+  mask-size: 24px !important;
+  background-color: #f0f2f5;
+  width: 24px;
+  height: 24px;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
 .chrome-ai-header-button:hover {
   transform: scale(1.1);
+  opacity: 1;
 }
 
 /* Remove old settings button styles */
@@ -130,6 +148,10 @@
   justify-content: flex-start;
 }
 
+.chrome-ai-message.assistant .chrome-ai-icon {
+  background-color: #202124;
+}
+
 .chrome-ai-message.user .chrome-ai-message-actions {
   justify-content: flex-end;
   background: rgba(255, 255, 255, 0.1);
@@ -185,7 +207,7 @@
   margin-bottom: 4px;
   display: flex;
   justify-content: flex-end;
-  gap: 2px;
+  gap: 8px;
 }
 
 .chrome-ai-toggle-button {
@@ -198,13 +220,31 @@
   transition: all 0.2s ease;
 }
 
+.chrome-ai-toggle-button.chrome-ai-icon {
+  mask-size: 20px !important;
+  background-color: rgb(65, 65, 65);
+  width: 20px;
+  height: 20px;
+  margin-top: 0px;
+  opacity: 0.8;
+}
+
+.chrome-ai-toggle-button.chrome-ai-icon.disabled {
+  opacity: 0.6;
+}
+
 .chrome-ai-toggle-button:hover {
-  background-color: #f0f2f5;
+  opacity: 1;
+  scale: 1.1;
+}
+.chrome-ai-toggle-button.disabled:hover {
+  opacity: 0.6;
+  scale: 1;
 }
 
 .chrome-ai-toggle-button.active {
-  background-color: #e3e9fd;
-  color: #4285f4;
+  background-color: #4285f4;
+  opacity: 1;
 }
 
 /* Input Container */
@@ -404,4 +444,16 @@
 .chrome-ai-message.user .markdown-body blockquote {
   border-left-color: rgba(255, 255, 255, 0.3);
   color: rgba(255, 255, 255, 0.9);
+}
+
+.chrome-ai-icon {
+  border: none;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  mask-size: 16px !important;
 }

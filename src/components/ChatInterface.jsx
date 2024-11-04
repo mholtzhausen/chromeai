@@ -8,7 +8,15 @@ const md = new MarkdownIt({
   typographer: true,
 })
 
-const Message = ({ content, role, id, isPinned, onDelete, onPin }) => {
+const Message = ({
+  content,
+  role,
+  id,
+  isPinned,
+  onDelete,
+  onPin,
+  iconUrls,
+}) => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(content)
   }
@@ -24,21 +32,23 @@ const Message = ({ content, role, id, isPinned, onDelete, onPin }) => {
         dangerouslySetInnerHTML={{ __html: md.render(content) }}
       />
       <div className="chrome-ai-message-actions">
-        <button onClick={copyToClipboard} title="Copy message">
-          📋
-        </button>
-        <button onClick={() => onDelete(id)} title="Delete message">
-          🗑️
-        </button>
+        <button
+          class="chrome-ai-icon copy"
+          onClick={copyToClipboard}
+          title="Copy message"
+        ></button>
+        <button
+          class="chrome-ai-icon trash"
+          onClick={() => onDelete(id)}
+          title="Delete message"
+        ></button>
         <button
           onClick={handlePinClick}
           title={`${
             isPinned ? 'Unpin' : 'Pin'
           } message (CTRL+click to toggle all)`}
-          className={isPinned ? 'active' : ''}
-        >
-          {isPinned ? '⛓️' : '🔗'}
-        </button>
+          class={isPinned ? 'chrome-ai-icon file-plus' : 'chrome-ai-icon file'}
+        ></button>
       </div>
     </div>
   )
@@ -139,7 +149,7 @@ const SettingsPanel = () => {
   )
 }
 
-export const ChatInterface = ({ hasSelection }) => {
+export const ChatInterface = ({ hasSelection, iconUrls }) => {
   const inputRef = useRef(null)
   const messagesEndRef = useRef(null)
   const [mode, setMode] = useState(hasSelection ? 'selection' : null)
@@ -260,19 +270,19 @@ export const ChatInterface = ({ hasSelection }) => {
           <span>ChromeAi</span>
           <div className="chrome-ai-header-buttons">
             <button
-              className="chrome-ai-header-button"
+              className={`chrome-ai-header-button chrome-ai-icon trash ${
+                showSettings ? 'hidden' : ''
+              }`}
               onClick={clearMessages}
               title="Clear messages"
-            >
-              🗑️
-            </button>
+            ></button>
             <button
-              className="chrome-ai-header-button"
+              className={`chrome-ai-header-button chrome-ai-icon ${
+                showSettings ? 'close' : 'settings'
+              }`}
               onClick={() => setShowSettings(!showSettings)}
               title={showSettings ? 'Close settings' : 'Open settings'}
-            >
-              {showSettings ? '✕' : '⚙️'}
-            </button>
+            ></button>
           </div>
         </div>
         {showSettings ? (
@@ -286,6 +296,7 @@ export const ChatInterface = ({ hasSelection }) => {
                   {...msg}
                   onDelete={handleDeleteMessage}
                   onPin={handlePinMessage}
+                  iconUrls={iconUrls}
                 />
               ))}
               <div ref={messagesEndRef} />
@@ -293,22 +304,18 @@ export const ChatInterface = ({ hasSelection }) => {
             <div className="chrome-ai-input-container">
               <div className="chrome-ai-button-bar">
                 <button
-                  className={`chrome-ai-toggle-button ${
+                  className={`chrome-ai-toggle-button chrome-ai-icon globe ${
                     mode === 'web' ? 'active' : ''
                   }`}
                   onClick={() => toggleMode('web')}
-                >
-                  🌐
-                </button>
+                ></button>
                 <button
-                  className={`chrome-ai-toggle-button ${
+                  className={`chrome-ai-toggle-button chrome-ai-icon scissors ${
                     mode === 'selection' ? 'active' : ''
                   } ${!hasSelection ? 'disabled' : ''}`}
                   onClick={() => hasSelection && toggleMode('selection')}
                   disabled={!hasSelection}
-                >
-                  ✂️
-                </button>
+                ></button>
               </div>
               <form onSubmit={handleSubmit}>
                 <input
