@@ -14,15 +14,23 @@ export async function queryAssistant(query, context, system = 'You are a helpful
     throw new Error('Selection context must be a string')
   }
 
+  if (!Array.isArray(context.messages)) {
+    context.messages = []
+  }
+
   console.log({ query, context, system })
   let _system = [system]
+
   if (context.web) {
     _system.push(`Contextual Information:\n---\n${context.web}\n---`)
   }
   if (context.selection) {
     _system.push(`Contextual Information:\n---\n${context.selection}\n---`)
   }
-  let answer = await ask(query, { system: _system.join('\n') })
+
+  let answer = await ask(query, {
+    system: _system.join('\n'),
+    messages: context.messages
+  })
   return answer
-  // TODO: Implement actual API call logic here
 }

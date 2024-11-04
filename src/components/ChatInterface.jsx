@@ -13,6 +13,10 @@ const Message = ({ content, role, id, isPinned, onDelete, onPin }) => {
     navigator.clipboard.writeText(content)
   }
 
+  const handlePinClick = (e) => {
+    onPin(id, e.ctrlKey)
+  }
+
   return (
     <div className={`chrome-ai-message ${role}`}>
       <div
@@ -27,8 +31,10 @@ const Message = ({ content, role, id, isPinned, onDelete, onPin }) => {
           🗑️
         </button>
         <button
-          onClick={() => onPin(id)}
-          title="Pin message"
+          onClick={handlePinClick}
+          title={`${
+            isPinned ? 'Unpin' : 'Pin'
+          } message (CTRL+click to toggle all)`}
           className={isPinned ? 'active' : ''}
         >
           {isPinned ? '⛓️' : '🔗'}
@@ -170,12 +176,22 @@ export const ChatInterface = ({ hasSelection }) => {
     setMessages(messages.filter((msg) => msg.id !== id))
   }
 
-  const handlePinMessage = (id) => {
-    setMessages(
-      messages.map((msg) =>
-        msg.id === id ? { ...msg, isPinned: !msg.isPinned } : msg
+  const handlePinMessage = (id, toggleAll = false) => {
+    if (toggleAll) {
+      // Find the clicked message's current pin status
+      const clickedMessage = messages.find((msg) => msg.id === id)
+      const newPinState = !clickedMessage.isPinned
+
+      // Toggle all messages to the opposite of clicked message's original state
+      setMessages(messages.map((msg) => ({ ...msg, isPinned: newPinState })))
+    } else {
+      // Toggle single message
+      setMessages(
+        messages.map((msg) =>
+          msg.id === id ? { ...msg, isPinned: !msg.isPinned } : msg
+        )
       )
-    )
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -183,7 +199,15 @@ export const ChatInterface = ({ hasSelection }) => {
     const query = inputRef.current.value.trim()
     if (!query) return
 
-    const context = {}
+    const context = {
+      messages: messages
+        .filter((msg) => msg.isPinned)
+        .map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+    }
+
     if (mode === 'web') {
       context.web = document.body.innerText
     }
