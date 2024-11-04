@@ -47,6 +47,8 @@ iframe.style.cssText = `
   box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
   border-top-left-radius: 8px;
   border-bottom-left-radius: 8px;
+  pointer-events: auto;
+  overflow: hidden;
 `
 
 // Initialize iframe content
@@ -72,6 +74,39 @@ const initializeIframe = async () => {
       </head>
       <body>
         <div id="chrome-ai-root"></div>
+        <script>
+          // Comprehensive scroll lock
+          document.addEventListener('wheel', (e) => {
+            const target = e.target;
+            const scrollable = target.closest('.chrome-ai-chat-container');
+            if (!scrollable) {
+              e.preventDefault();
+              return;
+            }
+            
+            const scrollTop = scrollable.scrollTop;
+            const scrollHeight = scrollable.scrollHeight;
+            const height = scrollable.clientHeight;
+            const delta = e.deltaY;
+            
+            // Prevent scroll when at boundaries
+            if ((delta > 0 && scrollTop + height >= scrollHeight) ||
+                (delta < 0 && scrollTop <= 0)) {
+              e.preventDefault();
+            }
+            
+            // Stop propagation in all cases
+            e.stopPropagation();
+          }, { passive: false, capture: true });
+
+          // Prevent scrolling main page when reaching boundaries
+          document.addEventListener('touchstart', (e) => {
+            const target = e.target;
+            if (!target.closest('.chrome-ai-chat-container')) {
+              e.preventDefault();
+            }
+          }, { passive: false });
+        </script>
       </body>
     </html>
   `

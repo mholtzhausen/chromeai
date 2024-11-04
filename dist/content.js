@@ -70,6 +70,8 @@ ${u.selection}
   box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
   border-top-left-radius: 8px;
   border-bottom-left-radius: 8px;
+  pointer-events: auto;
+  overflow: hidden;
 `;const Cc=async()=>{const e=await fetch(chrome.runtime.getURL("styles.css")).then(n=>n.text());re.contentDocument;const u=`
     <!DOCTYPE html>
     <html>
@@ -86,6 +88,39 @@ ${u.selection}
       </head>
       <body>
         <div id="chrome-ai-root"></div>
+        <script>
+          // Comprehensive scroll lock
+          document.addEventListener('wheel', (e) => {
+            const target = e.target;
+            const scrollable = target.closest('.chrome-ai-chat-container');
+            if (!scrollable) {
+              e.preventDefault();
+              return;
+            }
+            
+            const scrollTop = scrollable.scrollTop;
+            const scrollHeight = scrollable.scrollHeight;
+            const height = scrollable.clientHeight;
+            const delta = e.deltaY;
+            
+            // Prevent scroll when at boundaries
+            if ((delta > 0 && scrollTop + height >= scrollHeight) ||
+                (delta < 0 && scrollTop <= 0)) {
+              e.preventDefault();
+            }
+            
+            // Stop propagation in all cases
+            e.stopPropagation();
+          }, { passive: false, capture: true });
+
+          // Prevent scrolling main page when reaching boundaries
+          document.addEventListener('touchstart', (e) => {
+            const target = e.target;
+            if (!target.closest('.chrome-ai-chat-container')) {
+              e.preventDefault();
+            }
+          }, { passive: false });
+        <\/script>
       </body>
     </html>
   `;re.contentWindow.document.documentElement.innerHTML=u;const t=window.getSelection().toString().trim();Tr(E(mi,{hasSelection:!!t},Date.now()),re.contentDocument.getElementById("chrome-ai-root")),gi()},gi=()=>{const e=(u=0)=>{const t=re.contentDocument.querySelector(".chrome-ai-input");if(t){setTimeout(()=>t.focus(),50);return}u<10&&setTimeout(()=>e(u+1),50)};e()},xi=()=>{const e=re.style.transform==="translateX(0px)",u=window.getSelection().toString().trim();e||(u&&navigator.clipboard.writeText(u),Tr(E(mi,{hasSelection:!!u},Date.now()),re.contentDocument.getElementById("chrome-ai-root")),gi()),re.style.transform=e?"translateX(100%)":"translateX(0)",Re.style.right=e?"0":re.getBoundingClientRect().width+"px"};Re.addEventListener("click",xi);window.addEventListener("message",e=>{e.data.type==="settingsUpdated"&&(Re.style.display=e.data.showTab?"flex":"none")});chrome.runtime.onMessage.addListener((e,u,t)=>(e.command==="toggle-panel"&&(xi(),t({received:!0})),!1));document.body.appendChild(Re);document.body.appendChild(re);Cc();
