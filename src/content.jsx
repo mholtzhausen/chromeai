@@ -26,6 +26,11 @@ tab.style.cssText = `
   transition: right 0.3s ease;
 `
 
+// Initialize tab visibility
+chrome.storage.local.get(['showTab'], (result) => {
+  tab.style.display = result.showTab !== false ? 'flex' : 'none'
+})
+
 // Create and setup iframe
 const iframe = document.createElement('iframe')
 iframe.id = 'chrome-ai-iframe'
@@ -35,7 +40,7 @@ iframe.style.cssText = `
   right: 0;
   top: 15px;
   height: calc(100vh - 30px);
-  width: min(40vw, 800px);
+  width: clamp(600px, 40vw, 800px);
   transform: translateX(100%);
   transition: transform 0.3s ease;
   z-index: 2147483647;
@@ -111,11 +116,19 @@ const togglePanel = () => {
     focusInput()
   }
 
-  iframe.style.transform = isOpen ? 'translateX(100%)' : 'translateX(0px)'
-  tab.style.right = isOpen ? '0' : iframe.offsetWidth + 'px'
+  // Update position considering the fixed width
+  iframe.style.transform = isOpen ? 'translateX(100%)' : 'translateX(0)'
+  tab.style.right = isOpen ? '0' : iframe.getBoundingClientRect().width + 'px'
 }
 
 tab.addEventListener('click', togglePanel)
+
+// Listen for settings updates from iframe
+window.addEventListener('message', (event) => {
+  if (event.data.type === 'settingsUpdated') {
+    tab.style.display = event.data.showTab ? 'flex' : 'none'
+  }
+})
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.command === 'toggle-panel') {

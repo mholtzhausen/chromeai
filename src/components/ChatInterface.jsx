@@ -8,39 +8,74 @@ const md = new MarkdownIt({
   typographer: true,
 })
 
-const Message = ({ content, role }) => (
-  <div className={`chrome-ai-message ${role}`}>
-    <div
-      className="chrome-ai-message-content markdown-body"
-      dangerouslySetInnerHTML={{ __html: md.render(content) }}
-    />
-  </div>
-)
+const Message = ({ content, role, id, isPinned, onDelete, onPin }) => {
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(content)
+  }
+
+  return (
+    <div className={`chrome-ai-message ${role}`}>
+      <div
+        className="chrome-ai-message-content markdown-body"
+        dangerouslySetInnerHTML={{ __html: md.render(content) }}
+      />
+      <div className="chrome-ai-message-actions">
+        <button onClick={copyToClipboard} title="Copy message">
+          📋
+        </button>
+        <button onClick={() => onDelete(id)} title="Delete message">
+          🗑️
+        </button>
+        <button
+          onClick={() => onPin(id)}
+          title="Pin message"
+          className={isPinned ? 'active' : ''}
+        >
+          {isPinned ? '⛓️' : '🔗'}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 const SettingsPanel = () => {
   const [apiKey, setApiKey] = useState('')
+  const [systemMessage, setSystemMessage] = useState('')
+  const [showTab, setShowTab] = useState(true)
   const [saveStatus, setSaveStatus] = useState('')
 
   useEffect(() => {
-    // Load saved API key on mount
-    chrome.storage.local.get(['openaiApiKey'], (result) => {
-      if (result.openaiApiKey) {
-        setApiKey(result.openaiApiKey)
+    // Load saved settings on mount
+    chrome.storage.local.get(
+      ['openaiApiKey', 'systemMessage', 'showTab'],
+      (result) => {
+        if (result.openaiApiKey) setApiKey(result.openaiApiKey)
+        if (result.systemMessage) setSystemMessage(result.systemMessage)
+        setShowTab(result.showTab !== false) // default to true if not set
       }
-    })
+    )
   }, [])
 
-  const handleSaveApiKey = () => {
+  const handleSaveSettings = () => {
     setSaveStatus('Saving...')
-    chrome.storage.local.set({ openaiApiKey: apiKey }, () => {
-      if (chrome.runtime.lastError) {
-        setSaveStatus('Error saving key!')
-        console.error(chrome.runtime.lastError)
-      } else {
-        setSaveStatus('Saved!')
-        setTimeout(() => setSaveStatus(''), 2000)
+    chrome.storage.local.set(
+      {
+        openaiApiKey: apiKey,
+        systemMessage: systemMessage,
+        showTab: showTab,
+      },
+      () => {
+        if (chrome.runtime.lastError) {
+          setSaveStatus('Error saving settings!')
+          console.error(chrome.runtime.lastError)
+        } else {
+          setSaveStatus('Saved!')
+          // Dispatch event to notify content script
+          window.parent.postMessage({ type: 'settingsUpdated', showTab }, '*')
+          setTimeout(() => setSaveStatus(''), 2000)
+        }
       }
-    })
+    )
   }
 
   return (
@@ -55,23 +90,44 @@ const SettingsPanel = () => {
           placeholder="sk-..."
           autocomplete="off"
         />
-        <div className="chrome-ai-setting-actions">
-          <button
-            onClick={handleSaveApiKey}
-            disabled={saveStatus === 'Saving...'}
+      </div>
+      <div className="chrome-ai-setting-group">
+        <label>Default System Message:</label>
+        <textarea
+          value={systemMessage}
+          onChange={(e) => setSystemMessage(e.target.value)}
+          placeholder="Enter the default system message..."
+          className="chrome-ai-textarea"
+          rows={4}
+        />
+      </div>
+      <div className="chrome-ai-setting-group">
+        <label className="chrome-ai-checkbox-label">
+          <input
+            type="checkbox"
+            checked={showTab}
+            onChange={(e) => setShowTab(e.target.checked)}
+            className="chrome-ai-checkbox"
+          />
+          Show activation tab
+        </label>
+      </div>
+      <div className="chrome-ai-setting-actions">
+        <button
+          onClick={handleSaveSettings}
+          disabled={saveStatus === 'Saving...'}
+        >
+          Save All Settings
+        </button>
+        {saveStatus && (
+          <span
+            className={`chrome-ai-save-status ${
+              saveStatus === 'Error saving settings!' ? 'error' : ''
+            }`}
           >
-            Save
-          </button>
-          {saveStatus && (
-            <span
-              className={`chrome-ai-save-status ${
-                saveStatus === 'Error saving key!' ? 'error' : ''
-              }`}
-            >
-              {saveStatus}
-            </span>
-          )}
-        </div>
+            {saveStatus}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -110,6 +166,18 @@ export const ChatInterface = ({ hasSelection }) => {
     setMode(mode === newMode ? null : newMode)
   }
 
+  const handleDeleteMessage = (id) => {
+    setMessages(messages.filter((msg) => msg.id !== id))
+  }
+
+  const handlePinMessage = (id) => {
+    setMessages(
+      messages.map((msg) =>
+        msg.id === id ? { ...msg, isPinned: !msg.isPinned } : msg
+      )
+    )
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const query = inputRef.current.value.trim()
@@ -123,15 +191,34 @@ export const ChatInterface = ({ hasSelection }) => {
       context.selection = window.getSelection().toString().trim()
     }
 
-    // Add user message
-    const userMessage = { content: query, role: 'user' }
+    // Get saved system message
+    const { systemMessage } = await new Promise((resolve) => {
+      chrome.storage.local.get(['systemMessage'], resolve)
+    })
+
+    // Add user message with unique id and isPinned false
+    const userMessage = {
+      id: Date.now(),
+      content: query,
+      role: 'user',
+      isPinned: false,
+    }
     setMessages((prev) => [...prev, userMessage])
 
-    // Get AI response
-    const response = await queryAssistant(query, context)
+    // Get AI response with system message
+    const response = await queryAssistant(
+      query,
+      context,
+      systemMessage || 'You are a helpful assistant'
+    )
 
-    // Add assistant message
-    const assistantMessage = { content: response, role: 'assistant' }
+    // Add assistant message with unique id and isPinned false
+    const assistantMessage = {
+      id: Date.now() + 1,
+      content: response,
+      role: 'assistant',
+      isPinned: false,
+    }
     setMessages((prev) => [...prev, assistantMessage])
 
     inputRef.current.value = ''
@@ -169,8 +256,13 @@ export const ChatInterface = ({ hasSelection }) => {
         ) : (
           <>
             <div className="chrome-ai-chat-container">
-              {messages.map((msg, idx) => (
-                <Message key={idx} {...msg} />
+              {messages.map((msg) => (
+                <Message
+                  key={msg.id}
+                  {...msg}
+                  onDelete={handleDeleteMessage}
+                  onPin={handlePinMessage}
+                />
               ))}
               <div ref={messagesEndRef} />
             </div>
