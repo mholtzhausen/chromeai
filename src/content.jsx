@@ -64,7 +64,6 @@ const initializeIframe = async () => {
   })
 
   let iconStyles = `
-
     .chrome-ai-icon.copy {mask: url(${chrome.runtime.getURL(
       'icons/copy.svg'
     )}) no-repeat;}
@@ -103,6 +102,8 @@ const initializeIframe = async () => {
     <html class="${isDarkMode ? 'dark-mode' : ''}">
       <head>
         <link rel="stylesheet" href="${chrome.runtime.getURL('styles.css')}">
+        <link rel="stylesheet" href="${chrome.runtime.getURL('dark.css')}">
+        <link rel="stylesheet" href="${chrome.runtime.getURL('markdown.css')}">
         <style>${iconStyles}</style>
       </head>
       <body class="${isDarkMode ? 'dark-mode' : ''}">

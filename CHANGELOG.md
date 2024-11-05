@@ -7,12 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2024
 
+### Added
+
+- Loading animation styles in ChatInterface for better user feedback
+- Comprehensive scroll lock mechanism for chat container
+- Message pinning functionality with context support
+- Tab visibility settings for improved user experience
+
 ### Enhanced
 
 - Added loading animation in assistant's reply bubble while waiting for API responses
 - Disabled input and action buttons during API calls to prevent multiple submissions
 - Action bar now uses selected text instead of full page context when text is selected and selection mode is active
 - Improved context handling in ChatInterface to respect user's selection mode
+- Container and panel styles for better visual hierarchy
+- Scrollbar styles for improved usability
+- Message layout and organization
+- Iframe width adjustments for better display
+
+### Updated
+
+- Upgraded Preact to version 10.24.3
+- Updated Vite to version 5.4.10
+- Updated OpenAI SDK to version 4.70.2
+- Updated markdown-it to version 14.1.0
+
+### Refactored
+
+- CSS organization and styling rules
+- Message clearing functionality
+- File paths structure
 
 ## [1.0.0] - 2024
 

@@ -21,6 +21,8 @@
     {
       "resources": [
         "styles.css",
+        "dark.css",
+        "markdown.css",
         "icons/*"
       ],
       "matches": [
