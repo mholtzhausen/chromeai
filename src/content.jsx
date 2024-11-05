@@ -1,5 +1,6 @@
 import { render } from 'preact'
 import { ChatInterface } from './components/ChatInterface'
+import { actions } from './lib/actions.mjs' // Import actions
 
 const iconUrls = {
   copy: chrome.runtime.getURL('icons/copy.svg'),
@@ -57,6 +58,11 @@ iframe.style.cssText = `
 
 // Initialize iframe content
 const initializeIframe = async () => {
+  // Get current dark mode setting
+  const { isDarkMode } = await new Promise((resolve) => {
+    chrome.storage.local.get(['isDarkMode'], resolve)
+  })
+
   let iconStyles = `
 
     .chrome-ai-icon.copy {mask: url(${chrome.runtime.getURL(
@@ -83,51 +89,24 @@ const initializeIframe = async () => {
     .chrome-ai-icon.trash {mask: url(${chrome.runtime.getURL(
       'icons/trash-2.svg'
     )}) no-repeat;}
+    .chrome-ai-icon.sun {mask: url(${chrome.runtime.getURL(
+      'icons/sun.svg'
+    )}) no-repeat;}
+    .chrome-ai-icon.moon {mask: url(${chrome.runtime.getURL(
+      'icons/moon.svg'
+    )}) no-repeat;}
   `
 
   const doc = iframe.contentDocument
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html class="${isDarkMode ? 'dark-mode' : ''}">
       <head>
         <link rel="stylesheet" href="${chrome.runtime.getURL('styles.css')}">
         <style>${iconStyles}</style>
       </head>
-      <body>
+      <body class="${isDarkMode ? 'dark-mode' : ''}">
         <div id="chrome-ai-root"></div>
-        <script>
-          // Comprehensive scroll lock
-          document.addEventListener('wheel', (e) => {
-            const target = e.target;
-            const scrollable = target.closest('.chrome-ai-chat-container');
-            if (!scrollable) {
-              e.preventDefault();
-              return;
-            }
-            
-            const scrollTop = scrollable.scrollTop;
-            const scrollHeight = scrollable.scrollHeight;
-            const height = scrollable.clientHeight;
-            const delta = e.deltaY;
-            
-            // Prevent scroll when at boundaries
-            if ((delta > 0 && scrollTop + height >= scrollHeight) ||
-                (delta < 0 && scrollTop <= 0)) {
-              e.preventDefault();
-            }
-            
-            // Stop propagation in all cases
-            e.stopPropagation();
-          }, { passive: false, capture: true });
-
-          // Prevent scrolling main page when reaching boundaries
-          document.addEventListener('touchstart', (e) => {
-            const target = e.target;
-            if (!target.closest('.chrome-ai-chat-container')) {
-              e.preventDefault();
-            }
-          }, { passive: false });
-        </script>
       </body>
     </html>
   `
@@ -135,17 +114,48 @@ const initializeIframe = async () => {
   // Replace document.write with safer DOM manipulation
   iframe.contentWindow.document.documentElement.innerHTML = html
 
+  // Add escape key handler for iframe document
+  iframe.contentDocument.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key === 'Escape') {
+        togglePanel(true)
+        e.stopPropagation()
+        e.preventDefault()
+      }
+    },
+    true
+  )
+
   const selectedText = window.getSelection().toString().trim()
   render(
     <ChatInterface
       hasSelection={Boolean(selectedText)}
       iconUrls={iconUrls}
       key={Date.now()}
+      actions={actions || {}} // Ensure actions is an object
+      initialDarkMode={isDarkMode} // Add this prop
     />,
     iframe.contentDocument.getElementById('chrome-ai-root')
   )
   focusInput()
 }
+
+// Root-level event listener for escape key
+document.addEventListener(
+  'keydown',
+  (e) => {
+    if (e.key === 'Escape') {
+      const isOpen = iframe.style.transform === 'translateX(0px)'
+      if (isOpen) {
+        togglePanel(true)
+        e.stopPropagation()
+        e.preventDefault()
+      }
+    }
+  },
+  true
+) // Use capture phase for highest priority
 
 const focusInput = () => {
   const tryFocus = (attempts = 0) => {
@@ -161,38 +171,65 @@ const focusInput = () => {
   tryFocus()
 }
 
-const togglePanel = () => {
+const togglePanel = (forceClose = false) => {
   const isOpen = iframe.style.transform === 'translateX(0px)'
-  const selectedText = window.getSelection().toString().trim()
 
-  if (!isOpen) {
+  // If forceClose is true, or if panel is open, close it
+  if (forceClose || isOpen) {
+    iframe.style.transform = 'translateX(100%)'
+    tab.style.right = '0'
+    return
+  }
+
+  // Get the current dark mode setting before rendering
+  chrome.storage.local.get(['isDarkMode'], (result) => {
+    const selectedText = window.getSelection().toString().trim()
     if (selectedText) {
       navigator.clipboard.writeText(selectedText)
     }
+
     render(
       <ChatInterface
         hasSelection={Boolean(selectedText)}
         iconUrls={iconUrls}
+        actions={actions}
         key={Date.now()}
+        initialDarkMode={result.isDarkMode || false}
       />,
       iframe.contentDocument.getElementById('chrome-ai-root')
     )
     focusInput()
-  }
 
-  // Update position considering the fixed width
-  iframe.style.transform = isOpen ? 'translateX(100%)' : 'translateX(0)'
-  tab.style.right = isOpen ? '0' : iframe.getBoundingClientRect().width + 'px'
+    iframe.style.transform = 'translateX(0)'
+    tab.style.right = iframe.getBoundingClientRect().width + 'px'
+  })
 }
 
-tab.addEventListener('click', togglePanel)
+// Simplified message listener
+window.addEventListener(
+  'message',
+  (event) => {
+    if (event.source !== iframe.contentWindow) return
 
-// Listen for settings updates from iframe
-window.addEventListener('message', (event) => {
-  if (event.data.type === 'settingsUpdated') {
-    tab.style.display = event.data.showTab ? 'flex' : 'none'
-  }
-})
+    switch (event.data.type) {
+      case 'themeChanged':
+        iframe.contentDocument.documentElement.classList.toggle(
+          'dark-mode',
+          event.data.isDarkMode
+        )
+        break
+      case 'settingsUpdated':
+        tab.style.display = event.data.showTab ? 'flex' : 'none'
+        break
+      case 'closePanel':
+        togglePanel(true)
+        break
+    }
+  },
+  false
+)
+
+tab.addEventListener('click', () => togglePanel())
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.command === 'toggle-panel') {

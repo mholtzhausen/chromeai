@@ -149,12 +149,24 @@ const SettingsPanel = () => {
   )
 }
 
-export const ChatInterface = ({ hasSelection, iconUrls }) => {
+export const ChatInterface = ({
+  hasSelection,
+  iconUrls,
+  actions = {},
+  initialDarkMode = false, // Add this prop
+}) => {
   const inputRef = useRef(null)
+  const selectRef = useRef(null)
   const messagesEndRef = useRef(null)
   const [mode, setMode] = useState(hasSelection ? 'selection' : null)
   const [showSettings, setShowSettings] = useState(false)
   const [messages, setMessages] = useState([])
+  const [isDarkMode, setIsDarkMode] = useState(initialDarkMode) // Use initial value
+
+  // Replace the dark mode effect with one that only updates classes
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark-mode', isDarkMode)
+  }, [isDarkMode])
 
   useEffect(() => {
     if (hasSelection) {
@@ -263,12 +275,84 @@ export const ChatInterface = ({ hasSelection, iconUrls }) => {
     chrome.storage.local.set({ messages: [] })
   }
 
+  const handleActionChange = async (e) => {
+    const actionKey = e.target.value
+    const action = actions[actionKey]
+    if (!action) return
+
+    const context = {
+      messages: messages
+        .filter((msg) => msg.isPinned)
+        .map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+    }
+
+    if (action.includePage) {
+      context.web = document.body.innerText
+    }
+
+    const userMessage = {
+      id: Date.now(),
+      content: action.prompt,
+      role: 'user',
+      isPinned: false,
+    }
+    setMessages((prev) => [...prev, userMessage])
+
+    const response = await queryAssistant(
+      action.prompt,
+      context,
+      action.system || 'You are a helpful assistant'
+    )
+
+    const assistantMessage = {
+      id: Date.now() + 1,
+      content: response,
+      role: 'assistant',
+      isPinned: false,
+    }
+    setMessages((prev) => [...prev, assistantMessage])
+
+    // Reset select box to default option
+    if (selectRef.current) {
+      selectRef.current.value = ''
+    }
+  }
+
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode
+    setIsDarkMode(newTheme)
+
+    // Notify parent frame about theme change
+    window.parent.postMessage(
+      {
+        type: 'themeChanged',
+        isDarkMode: newTheme,
+      },
+      '*'
+    )
+
+    // Update storage
+    chrome.storage.local.set({ isDarkMode: newTheme })
+  }
+
   return (
     <div className="chrome-ai-container">
       <div className="chrome-ai-panel">
         <div className="chrome-ai-header">
           <span>ChromeAi</span>
           <div className="chrome-ai-header-buttons">
+            <button
+              className={`chrome-ai-header-button chrome-ai-icon ${
+                isDarkMode ? 'moon' : 'sun'
+              }`}
+              onClick={toggleTheme}
+              title={
+                isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'
+              }
+            ></button>
             <button
               className={`chrome-ai-header-button chrome-ai-icon trash ${
                 showSettings ? 'hidden' : ''
@@ -303,19 +387,29 @@ export const ChatInterface = ({ hasSelection, iconUrls }) => {
             </div>
             <div className="chrome-ai-input-container">
               <div className="chrome-ai-button-bar">
-                <button
-                  className={`chrome-ai-toggle-button chrome-ai-icon globe ${
-                    mode === 'web' ? 'active' : ''
-                  }`}
-                  onClick={() => toggleMode('web')}
-                ></button>
-                <button
-                  className={`chrome-ai-toggle-button chrome-ai-icon scissors ${
-                    mode === 'selection' ? 'active' : ''
-                  } ${!hasSelection ? 'disabled' : ''}`}
-                  onClick={() => hasSelection && toggleMode('selection')}
-                  disabled={!hasSelection}
-                ></button>
+                <select ref={selectRef} onChange={handleActionChange}>
+                  <option value="">Select an action</option>
+                  {Object.keys(actions).map((key) => (
+                    <option key={key} value={key}>
+                      {key}
+                    </option>
+                  ))}
+                </select>
+                <div className="buttons-group">
+                  <button
+                    className={`chrome-ai-toggle-button chrome-ai-icon globe ${
+                      mode === 'web' ? 'active' : ''
+                    }`}
+                    onClick={() => toggleMode('web')}
+                  ></button>
+                  <button
+                    className={`chrome-ai-toggle-button chrome-ai-icon scissors ${
+                      mode === 'selection' ? 'active' : ''
+                    } ${!hasSelection ? 'disabled' : ''}`}
+                    onClick={() => hasSelection && toggleMode('selection')}
+                    disabled={!hasSelection}
+                  ></button>
+                </div>
               </div>
               <form onSubmit={handleSubmit}>
                 <input

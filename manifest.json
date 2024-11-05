@@ -14,7 +14,9 @@
     {
       "resources": [
         "styles.css",
-        "icons/*"
+        "icons/*",
+        "icons/sun.svg",
+        "icons/moon.svg"
       ],
       "matches": [
         "<all_urls>"
