@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'preact/hooks'
 import { queryAssistant } from '../chromeai.mjs'
+import { models } from '../lib/openai.mjs'
 import MarkdownIt from 'markdown-it'
 
 const md = new MarkdownIt({
@@ -25,6 +26,7 @@ const Message = ({
   onPin,
   iconUrls,
   isLoading,
+  model,
 }) => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(content)
@@ -49,23 +51,30 @@ const Message = ({
         dangerouslySetInnerHTML={{ __html: md.render(content) }}
       />
       <div className="chrome-ai-message-actions">
-        <button
-          class="chrome-ai-icon copy"
-          onClick={copyToClipboard}
-          title="Copy message"
-        ></button>
-        <button
-          class="chrome-ai-icon trash"
-          onClick={() => onDelete(id)}
-          title="Delete message"
-        ></button>
-        <button
-          onClick={handlePinClick}
-          title={`${
-            isPinned ? 'Unpin' : 'Pin'
-          } message (CTRL+click to toggle all)`}
-          class={isPinned ? 'chrome-ai-icon file-plus' : 'chrome-ai-icon file'}
-        ></button>
+        <div className="chrome-ai-message-actions-left">
+          <button
+            class="chrome-ai-icon copy"
+            onClick={copyToClipboard}
+            title="Copy message"
+          ></button>
+          <button
+            class="chrome-ai-icon trash"
+            onClick={() => onDelete(id)}
+            title="Delete message"
+          ></button>
+          <button
+            onClick={handlePinClick}
+            title={`${
+              isPinned ? 'Unpin' : 'Pin'
+            } message (CTRL+click to toggle all)`}
+            class={
+              isPinned ? 'chrome-ai-icon file-plus' : 'chrome-ai-icon file'
+            }
+          ></button>
+        </div>
+        {role === 'assistant' && model && (
+          <div className="chrome-ai-message-model">{model}</div>
+        )}
       </div>
     </div>
   )
@@ -73,21 +82,51 @@ const Message = ({
 
 const SettingsPanel = () => {
   const [apiKey, setApiKey] = useState('')
+  const [baseUrl, setBaseUrl] = useState('')
   const [systemMessage, setSystemMessage] = useState('')
   const [showTab, setShowTab] = useState(true)
   const [saveStatus, setSaveStatus] = useState('')
+  const [availableModels, setAvailableModels] = useState([])
+  const [selectedModel, setSelectedModel] = useState('gpt-4')
+  const [loadingModels, setLoadingModels] = useState(false)
 
   useEffect(() => {
     // Load saved settings on mount
     chrome.storage.local.get(
-      ['openaiApiKey', 'systemMessage', 'showTab'],
+      [
+        'openaiApiKey',
+        'systemMessage',
+        'showTab',
+        'openaiBaseUrl',
+        'selectedModel',
+      ],
       (result) => {
         if (result.openaiApiKey) setApiKey(result.openaiApiKey)
         if (result.systemMessage) setSystemMessage(result.systemMessage)
+        if (result.selectedModel) setSelectedModel(result.selectedModel)
         setShowTab(result.showTab !== false) // default to true if not set
+        setBaseUrl(result.openaiBaseUrl || 'https://api.openai.com1')
       }
     )
   }, [])
+
+  useEffect(() => {
+    const loadModels = async () => {
+      setLoadingModels(true)
+      try {
+        const modelList = await models()
+        setAvailableModels(modelList)
+      } catch (error) {
+        console.error('Failed to load models:', error)
+      } finally {
+        setLoadingModels(false)
+      }
+    }
+
+    if (apiKey) {
+      loadModels()
+    }
+  }, [apiKey, baseUrl])
 
   const handleSaveSettings = () => {
     setSaveStatus('Saving...')
@@ -96,6 +135,8 @@ const SettingsPanel = () => {
         openaiApiKey: apiKey,
         systemMessage: systemMessage,
         showTab: showTab,
+        openaiBaseUrl: baseUrl,
+        selectedModel: selectedModel,
       },
       () => {
         if (chrome.runtime.lastError) {
@@ -123,6 +164,34 @@ const SettingsPanel = () => {
           placeholder="sk-..."
           autocomplete="off"
         />
+      </div>
+      <div className="chrome-ai-setting-group">
+        <label>OpenAI Base URL:</label>
+        <input
+          type="text"
+          value={baseUrl}
+          onChange={(e) => setBaseUrl(e.target.value)}
+          placeholder="https://api.openai.com1"
+          autocomplete="off"
+        />
+      </div>
+      <div className="chrome-ai-setting-group">
+        <label>Default Model:</label>
+        <select
+          value={selectedModel}
+          onChange={(e) => setSelectedModel(e.target.value)}
+          disabled={loadingModels}
+        >
+          {loadingModels ? (
+            <option>Loading models...</option>
+          ) : (
+            availableModels.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.id}
+              </option>
+            ))
+          )}
+        </select>
       </div>
       <div className="chrome-ai-setting-group">
         <label>Default System Message:</label>
@@ -251,8 +320,8 @@ export const ChatInterface = ({
     }
 
     // Get saved system message
-    const { systemMessage } = await new Promise((resolve) => {
-      chrome.storage.local.get(['systemMessage'], resolve)
+    const { systemMessage, selectedModel } = await new Promise((resolve) => {
+      chrome.storage.local.get(['systemMessage', 'selectedModel'], resolve)
     })
 
     // Add user message
@@ -292,6 +361,7 @@ export const ChatInterface = ({
                 content: response,
                 role: 'assistant',
                 isPinned: false,
+                model: selectedModel || 'gpt-4',
               }
             : msg
         )
@@ -312,9 +382,9 @@ export const ChatInterface = ({
     const action = actions[actionKey]
     if (!action) return
 
-    // Get saved system message
-    const { systemMessage } = await new Promise((resolve) => {
-      chrome.storage.local.get(['systemMessage'], resolve)
+    // Get saved system message and model
+    const { systemMessage, selectedModel } = await new Promise((resolve) => {
+      chrome.storage.local.get(['systemMessage', 'selectedModel'], resolve)
     })
 
     const context = {
@@ -367,6 +437,7 @@ export const ChatInterface = ({
                 content: response,
                 role: 'assistant',
                 isPinned: false,
+                model: selectedModel || 'gpt-4',
               }
             : msg
         )

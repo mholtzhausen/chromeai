@@ -187,23 +187,19 @@ body {
   background-color: #202124;
 }
 
-.chrome-ai-message.user .chrome-ai-message-actions {
-  justify-content: flex-end;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.chrome-ai-message.assistant .chrome-ai-message-actions {
-  justify-content: flex-start;
-}
-
 .chrome-ai-message-actions {
   display: flex;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: center;
   padding: 4px 8px;
-  margin-top: 8px;
   margin: 8px -12px -8px -13px;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 0.15rem;
+}
+
+.chrome-ai-message-actions-left {
+  display: flex;
+  gap: 4px;
 }
 
 .chrome-ai-message-actions button {
@@ -214,6 +210,8 @@ body {
   line-height: 1;
   opacity: 0.7;
   transition: all 0.2s ease;
+  border: none;
+  background: none;
 }
 
 .chrome-ai-message-actions button:hover {
@@ -226,8 +224,22 @@ body {
   color: #4285f4;
 }
 
-.chrome-ai-message.user .chrome-ai-message-actions button.active {
-  color: #ffffff;
+.chrome-ai-message.user .chrome-ai-message-actions {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.chrome-ai-message-model {
+  font-size: 11px;
+  color: #666;
+  opacity: 0.8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.chrome-ai-message.user .chrome-ai-message-model {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Button Bar Styles */

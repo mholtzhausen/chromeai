@@ -16,8 +16,9 @@ export const initOpenAI = async () => {
   if (openaiInstance) return openaiInstance
 
   return new Promise((resolve, reject) => {
-    chrome.storage.local.get(['openaiApiKey'], (result) => {
+    chrome.storage.local.get(['openaiApiKey', 'openaiBaseUrl'], (result) => {
       const apiKey = result.openaiApiKey || process.env.OPENAI_API_KEY
+      const baseURL = result.openaiBaseUrl || 'https://api.openai.com/v1'
 
       if (!apiKey) {
         reject(new OpenAIError('OpenAI API key not found. Please add it in settings.', 'NO_API_KEY'))
@@ -25,7 +26,11 @@ export const initOpenAI = async () => {
       }
 
       try {
-        openaiInstance = new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
+        openaiInstance = new OpenAI({
+          apiKey,
+          baseURL,
+          dangerouslyAllowBrowser: true
+        })
         resolve(openaiInstance)
       } catch (error) {
         reject(new OpenAIError('Failed to initialize OpenAI client.', 'INIT_FAILED'))
@@ -38,11 +43,32 @@ export const getOpenAI = async () => {
   return await initOpenAI()
 }
 
+export const models = async () => {
+  try {
+    const openai = await getOpenAI()
+    const response = await openai.models.list()
+    const sortedModels = response.data.sort((a, b) => a.id.localeCompare(b.id))
+    return sortedModels
+  } catch (error) {
+    throw new OpenAIError('Failed to get models from OpenAI', 'API_ERROR')
+  }
+}
+
+const getDefaultModel = async () => {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['selectedModel'], (result) => {
+      resolve(result.selectedModel || 'gpt-4')
+    })
+  })
+}
+
 export const ask = async (prompt, config) => {
   try {
     const openai = await getOpenAI()
+    const defaultModel = await getDefaultModel()
+
     config = {
-      model: 'gpt-4',
+      model: defaultModel,
       system: 'You are a helpful assistant',
       messages: [],
       ...(config || {}),
@@ -127,8 +153,9 @@ export const createStructuredAsk = (name, query, zodSchema, config = {}) => {
   const structuredAsk = async function (prompt) {
     try {
       const openai = await getOpenAI()
+      const defaultModel = await getDefaultModel()
       const options = {
-        model,
+        model: model || defaultModel,
         messages: [
           {
             role: 'system',
@@ -168,10 +195,11 @@ export const createStructuredAsk = (name, query, zodSchema, config = {}) => {
 export const toolAsk = async (prompt, tools, config) => {
   try {
     const openai = await getOpenAI()
+    const defaultModel = await getDefaultModel()
     tools = Array.isArray(tools) ? tools : [tools]
 
     config = {
-      model: 'gpt-4',
+      model: defaultModel,
       system: 'You are a helpful assistant',
       messages: [],
       ...(config || {}),
