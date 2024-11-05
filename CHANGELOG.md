@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2024
+
+### Enhanced
+
+- Added loading animation in assistant's reply bubble while waiting for API responses
+- Disabled input and action buttons during API calls to prevent multiple submissions
+- Action bar now uses selected text instead of full page context when text is selected and selection mode is active
+- Improved context handling in ChatInterface to respect user's selection mode
+
 ## [1.0.0] - 2024
 
 ### Added

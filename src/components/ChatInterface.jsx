@@ -8,6 +8,14 @@ const md = new MarkdownIt({
   typographer: true,
 })
 
+const LoadingDots = () => (
+  <div className="chrome-ai-loading-dots">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+)
+
 const Message = ({
   content,
   role,
@@ -16,6 +24,7 @@ const Message = ({
   onDelete,
   onPin,
   iconUrls,
+  isLoading,
 }) => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(content)
@@ -23,6 +32,14 @@ const Message = ({
 
   const handlePinClick = (e) => {
     onPin(id, e.ctrlKey)
+  }
+
+  if (isLoading) {
+    return (
+      <div className={`chrome-ai-message ${role}`}>
+        <LoadingDots />
+      </div>
+    )
   }
 
   return (
@@ -153,7 +170,7 @@ export const ChatInterface = ({
   hasSelection,
   iconUrls,
   actions = {},
-  initialDarkMode = false, // Add this prop
+  initialDarkMode = false,
 }) => {
   const inputRef = useRef(null)
   const selectRef = useRef(null)
@@ -161,9 +178,9 @@ export const ChatInterface = ({
   const [mode, setMode] = useState(hasSelection ? 'selection' : null)
   const [showSettings, setShowSettings] = useState(false)
   const [messages, setMessages] = useState([])
-  const [isDarkMode, setIsDarkMode] = useState(initialDarkMode) // Use initial value
+  const [isDarkMode, setIsDarkMode] = useState(initialDarkMode)
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Replace the dark mode effect with one that only updates classes
   useEffect(() => {
     document.documentElement.classList.toggle('dark-mode', isDarkMode)
   }, [isDarkMode])
@@ -200,14 +217,10 @@ export const ChatInterface = ({
 
   const handlePinMessage = (id, toggleAll = false) => {
     if (toggleAll) {
-      // Find the clicked message's current pin status
       const clickedMessage = messages.find((msg) => msg.id === id)
       const newPinState = !clickedMessage.isPinned
-
-      // Toggle all messages to the opposite of clicked message's original state
       setMessages(messages.map((msg) => ({ ...msg, isPinned: newPinState })))
     } else {
-      // Toggle single message
       setMessages(
         messages.map((msg) =>
           msg.id === id ? { ...msg, isPinned: !msg.isPinned } : msg
@@ -219,7 +232,7 @@ export const ChatInterface = ({
   const handleSubmit = async (e) => {
     e.preventDefault()
     const query = inputRef.current.value.trim()
-    if (!query) return
+    if (!query || isLoading) return
 
     const context = {
       messages: messages
@@ -242,41 +255,60 @@ export const ChatInterface = ({
       chrome.storage.local.get(['systemMessage'], resolve)
     })
 
-    // Add user message with unique id and isPinned false
+    // Add user message
     const userMessage = {
       id: Date.now(),
       content: query,
       role: 'user',
       isPinned: false,
     }
-    setMessages((prev) => [...prev, userMessage])
 
-    // Get AI response with system message
-    const response = await queryAssistant(
-      query,
-      context,
-      systemMessage || 'You are a helpful assistant'
-    )
-
-    // Add assistant message with unique id and isPinned false
-    const assistantMessage = {
+    // Add loading message
+    const loadingMessage = {
       id: Date.now() + 1,
-      content: response,
+      content: '',
       role: 'assistant',
       isPinned: false,
+      isLoading: true,
     }
-    setMessages((prev) => [...prev, assistantMessage])
 
+    setMessages((prev) => [...prev, userMessage, loadingMessage])
+    setIsLoading(true)
     inputRef.current.value = ''
-  }
 
-  const clearMessages = () => {
-    setMessages([])
-    chrome.storage.local.set({ messages: [] })
+    try {
+      const response = await queryAssistant(
+        query,
+        context,
+        systemMessage || 'You are a helpful assistant'
+      )
+
+      // Replace loading message with response
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === loadingMessage.id
+            ? {
+                id: msg.id,
+                content: response,
+                role: 'assistant',
+                isPinned: false,
+              }
+            : msg
+        )
+      )
+    } catch (error) {
+      console.error('Error getting response:', error)
+      // Remove loading message on error
+      setMessages((prev) => prev.filter((msg) => msg.id !== loadingMessage.id))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleActionChange = async (e) => {
     const actionKey = e.target.value
+    if (!actionKey || isLoading) return
+
     const action = actions[actionKey]
     if (!action) return
 
@@ -295,7 +327,11 @@ export const ChatInterface = ({
     }
 
     if (action.includePage) {
-      context.web = document.body.innerText
+      if (mode === 'selection') {
+        context.selection = window.getSelection().toString().trim()
+      } else {
+        context.web = document.body.innerText
+      }
     }
 
     const userMessage = {
@@ -304,33 +340,51 @@ export const ChatInterface = ({
       role: 'user',
       isPinned: false,
     }
-    setMessages((prev) => [...prev, userMessage])
 
-    const response = await queryAssistant(
-      action.prompt,
-      context,
-      [action.system || '', systemMessage || ''].join('\n')
-    )
-
-    const assistantMessage = {
+    const loadingMessage = {
       id: Date.now() + 1,
-      content: response,
+      content: '',
       role: 'assistant',
       isPinned: false,
+      isLoading: true,
     }
-    setMessages((prev) => [...prev, assistantMessage])
 
-    // Reset select box to default option
-    if (selectRef.current) {
-      selectRef.current.value = ''
+    setMessages((prev) => [...prev, userMessage, loadingMessage])
+    setIsLoading(true)
+
+    try {
+      const response = await queryAssistant(
+        action.prompt,
+        context,
+        [action.system || '', systemMessage || ''].join('\n')
+      )
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === loadingMessage.id
+            ? {
+                id: msg.id,
+                content: response,
+                role: 'assistant',
+                isPinned: false,
+              }
+            : msg
+        )
+      )
+    } catch (error) {
+      console.error('Error getting response:', error)
+      setMessages((prev) => prev.filter((msg) => msg.id !== loadingMessage.id))
+    } finally {
+      setIsLoading(false)
+      if (selectRef.current) {
+        selectRef.current.value = ''
+      }
     }
   }
 
   const toggleTheme = () => {
     const newTheme = !isDarkMode
     setIsDarkMode(newTheme)
-
-    // Notify parent frame about theme change
     window.parent.postMessage(
       {
         type: 'themeChanged',
@@ -338,9 +392,12 @@ export const ChatInterface = ({
       },
       '*'
     )
-
-    // Update storage
     chrome.storage.local.set({ isDarkMode: newTheme })
+  }
+
+  const clearMessages = () => {
+    setMessages([])
+    chrome.storage.local.set({ messages: [] })
   }
 
   return (
@@ -392,7 +449,11 @@ export const ChatInterface = ({
             </div>
             <div className="chrome-ai-input-container">
               <div className="chrome-ai-button-bar">
-                <select ref={selectRef} onChange={handleActionChange}>
+                <select
+                  ref={selectRef}
+                  onChange={handleActionChange}
+                  disabled={isLoading}
+                >
                   <option value="">Select an action</option>
                   {Object.keys(actions).map((key) => (
                     <option key={key} value={key}>
@@ -406,13 +467,14 @@ export const ChatInterface = ({
                       mode === 'web' ? 'active' : ''
                     }`}
                     onClick={() => toggleMode('web')}
+                    disabled={isLoading}
                   ></button>
                   <button
                     className={`chrome-ai-toggle-button chrome-ai-icon scissors ${
                       mode === 'selection' ? 'active' : ''
                     } ${!hasSelection ? 'disabled' : ''}`}
                     onClick={() => hasSelection && toggleMode('selection')}
-                    disabled={!hasSelection}
+                    disabled={!hasSelection || isLoading}
                   ></button>
                 </div>
               </div>
@@ -422,6 +484,7 @@ export const ChatInterface = ({
                   type="text"
                   className="chrome-ai-input"
                   placeholder="Type your message..."
+                  disabled={isLoading}
                 />
               </form>
             </div>
