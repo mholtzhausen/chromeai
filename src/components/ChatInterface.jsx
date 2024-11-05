@@ -280,6 +280,11 @@ export const ChatInterface = ({
     const action = actions[actionKey]
     if (!action) return
 
+    // Get saved system message
+    const { systemMessage } = await new Promise((resolve) => {
+      chrome.storage.local.get(['systemMessage'], resolve)
+    })
+
     const context = {
       messages: messages
         .filter((msg) => msg.isPinned)
@@ -304,7 +309,7 @@ export const ChatInterface = ({
     const response = await queryAssistant(
       action.prompt,
       context,
-      action.system || 'You are a helpful assistant'
+      [action.system || '', systemMessage || ''].join('\n')
     )
 
     const assistantMessage = {
