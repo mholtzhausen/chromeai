@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ChromeAI",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "AI-powered Chrome extension for web browsing assistance",
   "permissions": [
     "commands",
