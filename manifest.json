@@ -56,7 +56,7 @@
     }
   ],
   "action": {
-    "default_icon": "icons/settings.svg",
+    "default_icon": "icons/icon64.png",
     "default_title": "ChromeAI"
   },
   "minimum_chrome_version": "88"
