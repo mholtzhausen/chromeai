@@ -105,7 +105,7 @@ const SettingsPanel = () => {
         if (result.systemMessage) setSystemMessage(result.systemMessage)
         if (result.selectedModel) setSelectedModel(result.selectedModel)
         setShowTab(result.showTab !== false) // default to true if not set
-        setBaseUrl(result.openaiBaseUrl || 'https://api.openai.com1')
+        setBaseUrl(result.openaiBaseUrl || 'https://api.openai.com/v1')
       }
     )
   }, [])
@@ -171,7 +171,7 @@ const SettingsPanel = () => {
           type="text"
           value={baseUrl}
           onChange={(e) => setBaseUrl(e.target.value)}
-          placeholder="https://api.openai.com1"
+          placeholder="https://api.openai.com/v1"
           autocomplete="off"
         />
       </div>
