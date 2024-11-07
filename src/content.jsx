@@ -214,13 +214,22 @@ window.addEventListener(
 
     switch (event.data.type) {
       case 'themeChanged':
-        iframe.contentDocument.documentElement.classList.toggle(
-          'dark-mode',
-          event.data.isDarkMode
-        )
+        // Update both HTML and body elements
+        const doc = iframe.contentDocument
+        doc.documentElement.classList.toggle('dark-mode', event.data.isDarkMode)
+        doc.body.classList.toggle('dark-mode', event.data.isDarkMode)
         break
       case 'settingsUpdated':
+        // Update tab visibility
         tab.style.display = event.data.showTab ? 'flex' : 'none'
+
+        // Update API settings immediately
+        if (event.data.apiKey) {
+          window.OPENAI_API_KEY = event.data.apiKey
+        }
+        if (event.data.baseUrl) {
+          window.OPENAI_BASE_URL = event.data.baseUrl
+        }
         break
       case 'closePanel':
         togglePanel(true)

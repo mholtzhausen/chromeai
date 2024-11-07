@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Enhanced
 
 - Fix OpenAI API base URL in SettingsPanel and update placeholder text
+- Fix dark-mode toggle apply immediately
 
 ## [1.2.0] - 2024
 

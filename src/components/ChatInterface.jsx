@@ -130,6 +130,12 @@ const SettingsPanel = () => {
 
   const handleSaveSettings = () => {
     setSaveStatus('Saving...')
+
+    // Apply API key immediately to window context
+    if (typeof window !== 'undefined') {
+      window.OPENAI_API_KEY = apiKey
+    }
+
     chrome.storage.local.set(
       {
         openaiApiKey: apiKey,
@@ -145,7 +151,15 @@ const SettingsPanel = () => {
         } else {
           setSaveStatus('Saved!')
           // Dispatch event to notify content script
-          window.parent.postMessage({ type: 'settingsUpdated', showTab }, '*')
+          window.parent.postMessage(
+            {
+              type: 'settingsUpdated',
+              showTab,
+              apiKey,
+              baseUrl,
+            },
+            '*'
+          )
           setTimeout(() => setSaveStatus(''), 2000)
         }
       }
@@ -456,6 +470,14 @@ export const ChatInterface = ({
   const toggleTheme = () => {
     const newTheme = !isDarkMode
     setIsDarkMode(newTheme)
+
+    // Update both HTML and body elements of the iframe
+    const doc =
+      window.parent.document.getElementById('chrome-ai-iframe').contentDocument
+    doc.documentElement.classList.toggle('dark-mode', newTheme)
+    doc.body.classList.toggle('dark-mode', newTheme)
+
+    // Notify parent frame
     window.parent.postMessage(
       {
         type: 'themeChanged',
@@ -463,6 +485,8 @@ export const ChatInterface = ({
       },
       '*'
     )
+
+    // Save to storage
     chrome.storage.local.set({ isDarkMode: newTheme })
   }
 

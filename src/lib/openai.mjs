@@ -13,7 +13,7 @@ export class OpenAIError extends Error {
 }
 
 export const initOpenAI = async () => {
-  if (openaiInstance) return openaiInstance
+  // if (openaiInstance) return openaiInstance
 
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(['openaiApiKey', 'openaiBaseUrl'], (result) => {
