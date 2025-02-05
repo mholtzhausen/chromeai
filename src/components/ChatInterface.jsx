@@ -343,7 +343,7 @@ export const ChatInterface = ({
       id: Date.now(),
       content: query,
       role: 'user',
-      isPinned: false,
+      isPinned: true, // Changed from false to true
     }
 
     // Add loading message
@@ -351,7 +351,7 @@ export const ChatInterface = ({
       id: Date.now() + 1,
       content: '',
       role: 'assistant',
-      isPinned: false,
+      isPinned: true, // Changed from false to true
       isLoading: true,
     }
 
@@ -374,7 +374,7 @@ export const ChatInterface = ({
                 id: msg.id,
                 content: response,
                 role: 'assistant',
-                isPinned: false,
+                isPinned: true, // Changed from false to true
                 model: selectedModel || 'gpt-4',
               }
             : msg
@@ -422,14 +422,14 @@ export const ChatInterface = ({
       id: Date.now(),
       content: action.prompt,
       role: 'user',
-      isPinned: false,
+      isPinned: true, // Changed from false to true
     }
 
     const loadingMessage = {
       id: Date.now() + 1,
       content: '',
       role: 'assistant',
-      isPinned: false,
+      isPinned: true, // Changed from false to true
       isLoading: true,
     }
 
@@ -450,7 +450,7 @@ export const ChatInterface = ({
                 id: msg.id,
                 content: response,
                 role: 'assistant',
-                isPinned: false,
+                isPinned: true, // Changed from false to true
                 model: selectedModel || 'gpt-4',
               }
             : msg
